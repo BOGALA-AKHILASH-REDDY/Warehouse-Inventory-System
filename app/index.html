@@ -1,0 +1,292 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>NexSupply WMS | Enterprise Warehouse Inventory Management System</title>
+  <meta name="description" content="Database-first Enterprise Warehouse Inventory Management System featuring 3NF Schema, Real-time Stock Tracking, ABC Analysis, and SQL Analytics." />
+  
+  <!-- Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  
+  <link rel="stylesheet" href="./style.css" />
+</head>
+<body class="dark-theme">
+  <!-- Top Navigation Header -->
+  <header class="app-header">
+    <div class="logo-container">
+      <div class="warehouse-badge">
+        <i data-lucide="package"></i>
+      </div>
+      <div>
+        <h1>NEXSUPPLY <span class="accent-text">WMS ENTERPRISE</span></h1>
+        <p class="subtitle">Multi-Warehouse Inventory & SQL Business Intelligence Core</p>
+      </div>
+    </div>
+    
+    <div class="header-actions">
+      <div class="status-indicator">
+        <span class="pulse-dot"></span>
+        <span>PostgreSQL 14 Cluster Connected</span>
+      </div>
+      <button id="btn-sync-db" class="btn btn-primary glow-effect">
+        <i data-lucide="refresh-cw"></i> Refresh Telemetry
+      </button>
+    </div>
+  </header>
+
+  <!-- Dashboard Main Layout -->
+  <main class="dashboard-container">
+    
+    <!-- Top Metric Overview Cards -->
+    <section class="metrics-grid">
+      <div class="metric-card">
+        <div class="metric-header">
+          <span>Total Asset Valuation</span>
+          <div class="icon-wrapper blue"><i data-lucide="dollar-sign"></i></div>
+        </div>
+        <div class="metric-value" id="val-total-valuation">$0.00</div>
+        <div class="metric-subtext">Across 5 Regional Warehouses</div>
+      </div>
+
+      <div class="metric-card">
+        <div class="metric-header">
+          <span>Active Product SKUs</span>
+          <div class="icon-wrapper cyan"><i data-lucide="boxes"></i></div>
+        </div>
+        <div class="metric-value" id="val-total-skus">100</div>
+        <div class="metric-subtext">Catalogued across 10 categories</div>
+      </div>
+
+      <div class="metric-card highlight-warning">
+        <div class="metric-header">
+          <span>Reorder Alerts Pending</span>
+          <div class="icon-wrapper amber"><i data-lucide="alert-circle"></i></div>
+        </div>
+        <div class="metric-value text-amber" id="val-reorder-count">0</div>
+        <div class="metric-subtext">Stock below min threshold</div>
+      </div>
+
+      <div class="metric-card highlight-danger">
+        <div class="metric-header">
+          <span>Expiry Risk (&lt;= 15 Days)</span>
+          <div class="icon-wrapper red"><i data-lucide="clock"></i></div>
+        </div>
+        <div class="metric-value text-danger" id="val-expiry-count">0</div>
+        <div class="metric-subtext">Perishable batches requiring action</div>
+      </div>
+    </section>
+
+    <!-- Navigation Tabs -->
+    <nav class="main-tabs">
+      <button class="tab-link active" data-tab="inventory"><i data-lucide="layers"></i> Live Inventory</button>
+      <button class="tab-link" data-tab="expiry"><i data-lucide="alert-triangle"></i> Expiry Monitor</button>
+      <button class="tab-link" data-tab="abc"><i data-lucide="pie-chart"></i> ABC Analysis</button>
+      <button class="tab-link" data-tab="suppliers"><i data-lucide="truck"></i> Supplier Performance</button>
+      <button class="tab-link" data-tab="sql-sandbox"><i data-lucide="terminal"></i> SQL Query Sandbox</button>
+      <button class="tab-link" data-tab="schema"><i data-lucide="database"></i> Schema & ERD</button>
+    </nav>
+
+    <!-- Tab 1: Live Inventory & Warehouse Filter -->
+    <section id="tab-inventory" class="tab-content active">
+      <div class="glass-panel">
+        <div class="panel-header">
+          <div>
+            <h3><i data-lucide="warehouse"></i> Multi-Warehouse Stock Monitor</h3>
+            <p class="panel-subtitle">Real-time quantity on hand, allocated stock, aisle location, and stock health indicators</p>
+          </div>
+          <div class="filter-controls">
+            <select id="select-warehouse">
+              <option value="ALL">All Warehouses (5)</option>
+              <option value="1">Chicago Central Superhub (ORD-WH01)</option>
+              <option value="2">Dallas Logistics Depot (DFW-WH02)</option>
+              <option value="3">Atlanta Distribution Center (ATL-WH03)</option>
+              <option value="4">Seattle Port Fulfillment (SEA-WH04)</option>
+              <option value="5">New Jersey Metro Regional (EWR-WH05)</option>
+            </select>
+            <input type="text" id="input-search-sku" placeholder="Search SKU or Product..." />
+          </div>
+        </div>
+
+        <div class="table-wrapper">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>SKU</th>
+                <th>Product Name</th>
+                <th>Category</th>
+                <th>Warehouse</th>
+                <th>On Hand</th>
+                <th>Available</th>
+                <th>Min / Max</th>
+                <th>Location</th>
+                <th>Status</th>
+              </tr>
+            </thead>
+            <tbody id="tbody-inventory">
+              <!-- Rendered via JS -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- Tab 2: Product Expiry Monitor -->
+    <section id="tab-expiry" class="tab-content">
+      <div class="layout-grid">
+        <div class="glass-panel">
+          <div class="panel-header">
+            <h3><i data-lucide="shield-alert" class="text-danger"></i> Perishable Batch Expiry Schedule</h3>
+          </div>
+          <div class="table-wrapper">
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th>Batch #</th>
+                  <th>SKU</th>
+                  <th>Product Name</th>
+                  <th>Warehouse</th>
+                  <th>Quantity</th>
+                  <th>Expiry Date</th>
+                  <th>Days Left</th>
+                  <th>Urgency</th>
+                </tr>
+              </thead>
+              <tbody id="tbody-expiry">
+                <!-- Rendered via JS -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <div class="glass-panel">
+          <div class="panel-header">
+            <h3><i data-lucide="bar-chart-2"></i> Expiry Risk Breakdown</h3>
+          </div>
+          <div class="chart-container">
+            <canvas id="expiryChart"></canvas>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Tab 3: ABC Inventory Analysis -->
+    <section id="tab-abc" class="tab-content">
+      <div class="glass-panel">
+        <div class="panel-header">
+          <div>
+            <h3><i data-lucide="trending-up"></i> ABC Inventory Pareto Classification</h3>
+            <p class="panel-subtitle">Calculated using SQL Window Function <code>SUM() OVER (ORDER BY revenue DESC)</code></p>
+          </div>
+        </div>
+        <div class="layout-grid">
+          <div class="table-wrapper">
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th>SKU</th>
+                  <th>Product Name</th>
+                  <th>Total Revenue</th>
+                  <th>Cumulative %</th>
+                  <th>Pareto Class</th>
+                </tr>
+              </thead>
+              <tbody id="tbody-abc">
+                <!-- Rendered via JS -->
+              </tbody>
+            </table>
+          </div>
+          <div class="chart-container">
+            <canvas id="abcChart"></canvas>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Tab 4: Supplier Performance -->
+    <section id="tab-suppliers" class="tab-content">
+      <div class="glass-panel">
+        <div class="panel-header">
+          <h3><i data-lucide="award"></i> Supplier Delivery Reliability & Lead Time Ranking</h3>
+        </div>
+        <div class="table-wrapper">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>Rank</th>
+                <th>Supplier Name</th>
+                <th>Rating</th>
+                <th>Total Orders</th>
+                <th>On-Time %</th>
+                <th>Avg Lead Time</th>
+                <th>Total Spend</th>
+              </tr>
+            </thead>
+            <tbody id="tbody-suppliers">
+              <!-- Rendered via JS -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- Tab 5: SQL Query Sandbox -->
+    <section id="tab-sql-sandbox" class="tab-content">
+      <div class="glass-panel">
+        <div class="panel-header">
+          <h3><i data-lucide="code"></i> Interactive SQL Query Sandbox</h3>
+          <div class="query-presets">
+            <button class="btn btn-sm btn-outline preset-sql" data-sql="abc">ABC Analysis</button>
+            <button class="btn btn-sm btn-outline preset-sql" data-sql="expiry">Expiring Items</button>
+            <button class="btn btn-sm btn-outline preset-sql" data-sql="reorder">Reorder Alerts</button>
+            <button class="btn btn-sm btn-outline preset-sql" data-sql="deadstock">Dead Stock (>180d)</button>
+          </div>
+        </div>
+
+        <div class="sql-editor-box">
+          <textarea id="sql-editor" rows="7" spellcheck="false"></textarea>
+          <div class="editor-actions">
+            <button id="btn-run-sql" class="btn btn-primary btn-sm">
+              <i data-lucide="play"></i> Execute Query
+            </button>
+            <button id="btn-copy-query" class="btn btn-secondary btn-sm">
+              <i data-lucide="copy"></i> Copy Query
+            </button>
+          </div>
+        </div>
+
+        <div class="sql-results-box" style="margin-top: 1rem;">
+          <div class="results-header">Query Results (<span id="sql-row-count">0</span> rows returned)</div>
+          <div class="table-wrapper">
+            <table class="data-table" id="table-sql-results">
+              <thead id="thead-sql-results"></thead>
+              <tbody id="tbody-sql-results"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Tab 6: Schema & ERD Documentation -->
+    <section id="tab-schema" class="tab-content">
+      <div class="glass-panel">
+        <div class="panel-header">
+          <h3><i data-lucide="file-text"></i> Database Schema & Data Dictionary (15 Tables)</h3>
+        </div>
+        <div id="schema-dictionary-container">
+          <!-- Rendered via JS -->
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <footer class="app-footer">
+    <p>NexSupply WMS Enterprise Edition &bull; Database-First Warehouse Management Architecture</p>
+  </footer>
+
+  <script type="module" src="./src/main.js"></script>
+</body>
+</html>
