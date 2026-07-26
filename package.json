@@ -1,0 +1,10 @@
+{
+  "name": "warehouse-inventory-system",
+  "private": true,
+  "version": "1.0.0",
+  "scripts": {
+    "dev": "npm --prefix app run dev",
+    "start": "npm --prefix app run dev",
+    "build": "npm --prefix app run build"
+  }
+}

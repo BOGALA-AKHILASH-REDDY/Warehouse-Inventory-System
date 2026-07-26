@@ -1,0 +1,21 @@
+{
+  "hash": "1957aca3",
+  "configHash": "327971f6",
+  "lockfileHash": "e3b0c442",
+  "browserHash": "131c92bf",
+  "optimized": {
+    "chart.js/auto": {
+      "src": "../../app/node_modules/chart.js/auto/auto.js",
+      "file": "chart__js_auto.js",
+      "fileHash": "4342af10",
+      "needsInterop": false
+    },
+    "lucide": {
+      "src": "../../app/node_modules/lucide/dist/esm/lucide.js",
+      "file": "lucide.js",
+      "fileHash": "ff37fa7d",
+      "needsInterop": false
+    }
+  },
+  "chunks": {}
+}
